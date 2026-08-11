@@ -3,7 +3,7 @@
 ## Features:
 
 ### Renderer
-* [ ] Implement proper .obj parsing. [obj parsing](#obj-parsing-details) **`WIP`**
+* [ ] Implement proper [.obj parsing](#obj-parsing-details). **`WIP`**
 * [ ] Add primitives.
     *  [ ] Cubes
     *  [ ] Spheres
