@@ -1,1 +1,7 @@
-- [x] Task test!
+# [SLUSH]
+
+### Renderer
+* [ ] Implement proper .obj parsing! **`WIP`**
+
+
+## Notes & Resources
