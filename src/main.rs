@@ -1,6 +1,7 @@
 use glfw::{Context, Action, Key, fail_on_errors};
 
 mod renderer;
+use log::error;
 use renderer::renderer::*;
 
 mod model;
@@ -36,7 +37,7 @@ async fn run() {
     let mut world = World::new();
     // world.tris.push(Object {position: glm::Vec3::new(0.0, 0.0, 1.5), angle: 0.0});
     world.quads.push(Object {position: glm::Vec3::new(0.0, 0.0, 1.0), angle: 0.0});
-    state.build_ubos_for_objects(2 + state.models.len());
+    state.build_ubos_for_objects(world.quads.len() + world.tris.len() + state.models.len());
     // initialize keys
     world.keys.insert(glfw::Key::W, false);
     world.keys.insert(glfw::Key::A, false);
@@ -99,10 +100,9 @@ async fn run() {
             }
         }
         state.render(&world.quads, &world.tris, &world.camera);
-        // swap buffers makes things visible
-        state.window.swap_buffers();
     }
 }
 fn main() {
+    env_logger::init();
     pollster::block_on(run());
 }

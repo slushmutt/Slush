@@ -12,6 +12,7 @@
 * [ ] UI Rendering
 * [ ] [Stylized Shaders](#shader-details)
     * [ ] Vertex Warping
+* [ ] Seperate my models bind groups from whatever the last loaded mesh was so that it can have its own position.
 
 ### Engine
 * [ ] [Collision detection](#collision-details)

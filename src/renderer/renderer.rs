@@ -338,7 +338,7 @@ impl<'a> State<'a> {
         }
     }
 
-    fn render_model(&self, model: &Model, renderpass: &mut wgpu::RenderPass) {
+    fn render_model(&self, model: &Model, renderpass: &mut wgpu::RenderPass, offset: usize) {
         // bind vertex and index buffer
         renderpass.set_vertex_buffer(0, 
             model.buffer.slice(0..model.ebo_offset));
@@ -348,8 +348,9 @@ impl<'a> State<'a> {
         // transforms
         renderpass.set_bind_group(
             1, 
-            &(self.ubo_group.as_ref().unwrap()).bind_groups[0], 
+            &(self.ubo_group.as_ref().unwrap()).bind_groups[offset], 
             &[]);
+        // renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
         
         for submesh in &model.submeshes {
             // select pipeline
@@ -453,7 +454,7 @@ impl<'a> State<'a> {
                 renderpass.draw_indexed(0..6, 0, 0..1);
                 renderpass.draw(0..3, 0..1);
             }
-            self.render_model(&self.models[0], &mut renderpass);
+            self.render_model(&self.models[0], &mut renderpass, offset);
         }
         self.queue.submit(std::iter::once(command_encoder.finish()));
 
@@ -518,7 +519,6 @@ impl<'a> State<'a> {
         scope = BindScope::UBO;
         layout = builder.build("UBO Bind Group Layout");
         layouts.insert(scope, layout);
-
         layouts
     }
 
