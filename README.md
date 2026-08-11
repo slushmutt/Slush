@@ -1,28 +1,25 @@
-# Slush Engine
+# Features
 
-## Features:
+## Renderer
+* [ ] Implement proper [.obj parsing](#obj-parsing-details) `WIP`
+* [ ] Add basic primitive geometry:
+    * [ ] Cubes
+    * [ ] Spheres
+    * [ ] Cylinders
+    * [ ] Capsules
+* [ ] Implement [lighting system](#lighting-details)
 
-### Renderer
-* [ ] Implement proper [.obj parsing](#obj-parsing-details). **`WIP`**
-* [ ] Add primitives.
-    *  [ ] Cubes
-    *  [ ] Spheres
-    *  [ ] Cylinder
-    *  [ ] Capsule
-* [ ] [Lighting](#Lighting)
-
-
-### Engine
-
-
-
+---
 
 # Notes & Resources
-## Renderer
+
+## Renderer Deep Dives
+
 ### OBJ Parsing Details
-(08/11/26)
-Currently the obj parsing system only supports models that are triangulated.
-It also does not handle duplicate verticies and creates an index per vertex which is inefficient. 
-Another issue is that it dosen't handle alot of the extra values stored in obj files such as bump maps.
-### Lighting
-Details WIP
+* **Date:** 2026-08-11
+* **Current Limitation:** The system only supports pre-triangulated models.
+* **Inefficiency:** It creates an individual index per vertex rather than handling duplicate vertices optimally.
+* **Missing Features:** It does not parse extra properties stored in `.obj` files (e.g., bump maps).
+
+### Lighting Details
+* **Status:** Specifications and requirements are currently a work in progress.
