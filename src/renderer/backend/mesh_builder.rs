@@ -258,6 +258,7 @@ impl ObjLoader {
         let mut model = self.finalize(device);
 
         model.submeshes = submeshes;
+        model.name = Some(filename.to_string());
         println!("Model has {} submeshes", model.submeshes.len());
 
         self.reset();
@@ -378,6 +379,6 @@ impl ObjLoader {
         println!("ebo offset: {}", ebo_offset);
         let submeshes = Vec::new();
 
-        Model { buffer, ebo_offset, submeshes }
+        Model { buffer, ebo_offset, submeshes ,name: None}
     }
 }

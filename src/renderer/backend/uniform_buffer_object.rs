@@ -1,6 +1,7 @@
 use super::bind_group;
 use super::mesh_builder::any_as_u8_slice;
 
+#[derive(Debug)]
 pub struct UBOGroup{
     pub buffer: wgpu::Buffer,
     pub bind_groups: Vec<wgpu::BindGroup>,

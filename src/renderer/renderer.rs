@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use glfw::Key::P;
 use glm::dot;
 use glm::radians;
+use log::error;
+use log::info;
 use raw_window_handle::HasWindowHandle;
 use raw_window_handle::HasDisplayHandle;
 use glfw::Window;
@@ -19,59 +21,8 @@ use crate::model::game_object::Camera;
 use crate::renderer::backend::bind_group_layout;
 use crate::renderer::backend::definitions::Vertex;
 use crate::renderer::backend::uniform_buffer_object::UBO;
+use crate::renderer::world::World;
 
-// the area that represents and manages all of my game objects
-pub struct World {
-    pub quads: Vec<Object>,
-    pub tris: Vec<Object>,
-    pub camera: Camera,
-    pub keys: HashMap<glfw::Key, bool>,
-}
-
-impl World{
-    pub fn new() -> Self{
-        World {quads: Vec::new(), tris: Vec::new(), camera: Camera::new(), keys: HashMap::new()  }
-    }
-
-    pub fn update(&mut self, dt: f32, window: &mut Window) {
-        for i in 0..self.tris.len() { self.tris[i].angle = self.tris[i].angle + 0.001 * dt;
-            if self.tris[i].angle > 360.0 {
-                self.tris[i].angle -= 360.0;
-            }
-        }
-        
-        let (mx, my) = window.get_cursor_pos();
-        let (dx_raw, dy_raw) = (mx as f32 - self.camera.last_mouse.0, my as f32 - self.camera.last_mouse.1);
-        self.camera.last_mouse = (mx as f32, my as f32);
-
-        let dx = (-0.05 * dx_raw) as f32; 
-        let dy = (-0.05 * dy_raw) as f32;
-        self.camera.rotate(dx, dy);
-
-        let mut d_right: f32 = 0.0;
-        let mut d_forward: f32 = 0.0;
-
-        let mut speed: f32 = 0.01;
-        
-        if self.keys[&glfw::Key::W] {
-            d_forward = d_forward + speed; 
-        }
-
-        if self.keys[&glfw::Key::A] {
-            d_right = d_right - speed; 
-        }
-
-        if self.keys[&glfw::Key::S] {
-            d_forward = d_forward - speed; 
-        }
-
-        if self.keys[&glfw::Key::D] {
-            d_right = d_right + speed; 
-        }
-        self.camera.walk(d_right, d_forward);
-    } 
-
-}
 
 pub struct State<'a> {
     // an instance is a handle to the wgpu context
@@ -297,7 +248,7 @@ impl<'a> State<'a> {
         let view_proj = projection * view;
         self.projection_ubo.upload(&view_proj, &self.queue);
     }
-    fn update_transforms(&mut self, quads: &Vec<Object>, tris: &Vec<Object>) {
+    fn update_transforms(&mut self, quads: &Vec<Object>, tris: &Vec<Object>, models: &Vec<Object>) {
         let mut offset: u64 = 0;
 
         // loop through quads and apply ubo with matrix
@@ -332,10 +283,30 @@ impl<'a> State<'a> {
 
             let matrix = 
                 ext::rotate(&m1, tris[i].angle,glm::Vec3::new(0.0, 0.0, 1.0))
-                * ext::translate(&m2, tris[i].position);
+               * ext::translate(&m2, tris[i].position);
             
-            self.ubo_group.as_mut().unwrap().upload(offset + i as u64, &matrix, &self.queue);
+           self.ubo_group.as_mut().unwrap().upload(offset + i as u64, &matrix, &self.queue);
         }
+
+        offset += tris.len() as u64;
+        let mut x = 0;
+        for model in models {
+            let c0 = glm::Vec4::new(1.0, 0.0, 0.0, 0.0);
+            let c1 = glm::Vec4::new(0.0, 1.0, 0.0, 0.0);
+            let c2 = glm::Vec4::new(0.0, 0.0, 1.0, 0.0);
+            let c3 = glm::Vec4::new(0.0, 0.0, 0.0, 1.0);
+            let m1 = glm::Matrix4::new(c0, c1, c2, c3);
+            let m2 = glm::Matrix4::new(c0, c1, c2, c3);
+
+            let matrix = 
+                ext::rotate(&m1, model.angle,glm::Vec3::new(0.0, 0.0, 1.0))
+               * ext::translate(&m2, model.position);
+
+           self.ubo_group.as_mut().unwrap().upload(offset + x as u64, &matrix, &self.queue);
+           x += 1;
+        }
+        offset += models.len() as u64;
+        
     }
 
     fn render_model(&self, model: &Model, renderpass: &mut wgpu::RenderPass, offset: usize) {
@@ -344,7 +315,8 @@ impl<'a> State<'a> {
             model.buffer.slice(0..model.ebo_offset));
         renderpass.set_index_buffer(model.buffer.slice(model.ebo_offset..), 
             wgpu::IndexFormat::Uint32);
-        
+
+
         // transforms
         renderpass.set_bind_group(
             1, 
@@ -363,9 +335,9 @@ impl<'a> State<'a> {
             renderpass.draw_indexed(start..(start + submesh.index_count), 0, 0..1);
         }
     }
-    pub fn render(&mut self, quads: &Vec<Object>, tris: &Vec<Object>, camera: &Camera) {
+    pub fn render(&mut self, quads: &Vec<Object>, tris: &Vec<Object>, models: &Vec<Object>, camera: &Camera) {
         self.update_projection(camera);
-        self.update_transforms(quads, tris);
+        self.update_transforms(quads, tris, models);
 
 
         // wait for the queue to submit the tris and quads before going ahead

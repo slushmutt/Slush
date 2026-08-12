@@ -50,6 +50,7 @@ pub struct Model {
     pub buffer: wgpu::Buffer,
     pub ebo_offset: u64,
     pub submeshes: Vec<SubMesh>,
+    pub name: Option<String>,
 }
 #[repr(C)]
 pub struct Vertex {
