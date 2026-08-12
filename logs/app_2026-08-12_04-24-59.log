@@ -1,0 +1,2 @@
+2026-08-12 04:24:59.674 [INFO] wgpu_hal::vulkan::adapter:3546 -> Found 2 cooperative matrix configurations supported by wgpu
+2026-08-12 04:24:59.685 [ERROR] wgpu::backend::wgpu_core:1280 -> Handling wgpu errors as fatal by default

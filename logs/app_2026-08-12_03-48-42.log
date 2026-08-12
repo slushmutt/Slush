@@ -1,0 +1,131 @@
+2026-08-12 03:48:42.354 [INFO] wgpu_hal::vulkan::adapter:3546 -> Found 2 cooperative matrix configurations supported by wgpu
+2026-08-12 03:48:42.368 [WARN] egui_wgpu::renderer:407 -> Detected a linear (sRGBA aware) framebuffer Bgra8UnormSrgb. egui prefers Rgba8Unorm or Bgra8Unorm
+2026-08-12 03:48:42.371 [INFO] slush::renderer::renderer:333 -> Are we here?
+2026-08-12 03:48:42.371 [INFO] slush::renderer::renderer:333 -> Are we here?
+2026-08-12 03:48:42.371 [INFO] slush::renderer::renderer:441 -> Map: Model {
+    buffer: Buffer {
+        inner: Core(
+            CoreBuffer {
+                context: ContextWgpuCore {
+                    type: "Native",
+                },
+                id: BufferId(4,1),
+                error_sink: Mutex {
+                    data: ErrorSink,
+                },
+            },
+        ),
+        map_context: Mutex {
+            data: MapContext {
+                mapped_range: None,
+                sub_ranges: [],
+            },
+        },
+        size: 1824,
+        usage: BufferUsages(
+            INDEX | VERTEX,
+        ),
+    },
+    ebo_offset: 1536,
+    submeshes: [
+        SubMesh {
+            first_index: 0,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 6,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 12,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 18,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 24,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 30,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 36,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 42,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 48,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 54,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 60,
+            index_count: 6,
+            material_id: 0,
+        },
+        SubMesh {
+            first_index: 66,
+            index_count: 6,
+            material_id: 0,
+        },
+    ],
+    name: Some(
+        "Quads.obj",
+    ),
+} Cube: Model {
+    buffer: Buffer {
+        inner: Core(
+            CoreBuffer {
+                context: ContextWgpuCore {
+                    type: "Native",
+                },
+                id: BufferId(5,1),
+                error_sink: Mutex {
+                    data: ErrorSink,
+                },
+            },
+        ),
+        map_context: Mutex {
+            data: MapContext {
+                mapped_range: None,
+                sub_ranges: [],
+            },
+        },
+        size: 328,
+        usage: BufferUsages(
+            INDEX | VERTEX,
+        ),
+    },
+    ebo_offset: 256,
+    submeshes: [
+        SubMesh {
+            first_index: 0,
+            index_count: 36,
+            material_id: 0,
+        },
+    ],
+    name: Some(
+        "Cube",
+    ),
+}
+2026-08-12 03:48:42.372 [ERROR] wgpu::backend::wgpu_core:2678 -> Handling wgpu errors as fatal by default

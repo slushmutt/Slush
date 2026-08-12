@@ -39,9 +39,10 @@ async fn run() {
 
     let mut state = State::new(&mut window).await;
     let mut world = World::new();
+    world.primitives.push(Object {position: glm::Vec3::new(0.0, 0.0, 10.0), angle: 0.0});
     world.models.push(Object {position: glm::Vec3::new(0.0, 0.0, 0.0), angle: 0.0});
     state.load_assets();
-    state.build_ubos_for_objects(world.quads.len() + world.tris.len() + state.models.len());
+    state.build_ubos_for_objects(world.primitives.len() + state.models.len());
     // initialize keys
     world.keys.insert(glfw::Key::W, false);
     world.keys.insert(glfw::Key::A, false);
@@ -107,7 +108,7 @@ async fn run() {
                 }
             }
         }
-        state.render(&world.quads, &world.tris, &world.models, &world.camera);
+        state.render(&world.primitives, &world.models, &world.camera);
          
     }
 }

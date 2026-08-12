@@ -6,7 +6,7 @@
     * [x] Bind groups working properly `(08/11/26)`
     * [ ] Parsing extra data (eg.. bump maps)
 * [ ] Add basic primitive geometry:
-    * [ ] Cubes
+    * [x] Cubes
     * [ ] Spheres
     * [ ] Cylinders
     * [ ] Capsules

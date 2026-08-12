@@ -39,12 +39,13 @@ pub struct Mesh {
     pub buffer: wgpu::Buffer,
     pub offset: u64
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct SubMesh {
     pub first_index: i32,
     pub index_count: u32,
     pub material_id: usize,
 }
+#[derive(Debug)]
 pub struct Model {
     pub buffer: wgpu::Buffer,
     pub ebo_offset: u64,

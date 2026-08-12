@@ -1,7 +1,5 @@
-use std::default;
-
 static mut CLICKED: bool = false;
-pub fn debug(raw_input: &egui::RawInput, egui_ctx: &egui::Context, egui_events: &Vec<egui::Event>) -> egui::FullOutput{
+pub fn debug(raw_input: &egui::RawInput, egui_ctx: &egui::Context) -> egui::FullOutput{
     egui_ctx.run_ui(raw_input.clone(), |ctx| {
                 egui::Window::new("Debug").show(ctx, |ui| {
                     ui.label("Hello from egui");

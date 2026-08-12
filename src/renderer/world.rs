@@ -6,8 +6,7 @@ use crate::model::game_object::{Camera, Object};
 
 // the area that represents and manages all of my game objects
 pub struct World {
-    pub quads: Vec<Object>,
-    pub tris: Vec<Object>,
+    pub primitives: Vec<Object>,
     pub models: Vec<Object>,
     pub camera: Camera,
     pub keys: HashMap<glfw::Key, bool>,
@@ -15,7 +14,7 @@ pub struct World {
 
 impl World{
     pub fn new() -> Self{
-        World {quads: Vec::new(), tris: Vec::new(), models: Vec::new(), camera: Camera::new(), keys: HashMap::new()  }
+        World {primitives: Vec::new(),  models: Vec::new(), camera: Camera::new(), keys: HashMap::new()  }
     }
 
     pub fn update(&mut self, dt: f32, window: &mut Window) {

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::primitive;
 use glfw::Key::P;
 use glm::dot;
 use glm::radians;
@@ -21,6 +22,7 @@ use crate::model::game_object::Camera;
 use crate::renderer::backend::bind_group_layout;
 use crate::renderer::backend::definitions::Vertex;
 use crate::renderer::backend::uniform_buffer_object::UBO;
+use crate::renderer::primitives;
 use crate::renderer::world::World;
 
 
@@ -277,11 +279,11 @@ impl<'a> State<'a> {
         let view_proj = projection * view;
         self.projection_ubo.upload(&view_proj, &self.queue);
     }
-    fn update_transforms(&mut self, quads: &Vec<Object>, tris: &Vec<Object>, models: &Vec<Object>) {
+    fn update_transforms(&mut self, primitives: &Vec<Object>, models: &Vec<Object>) {
         let mut offset: u64 = 0;
 
         // loop through quads and apply ubo with matrix
-        for i in 0..quads.len() {
+        for i in 0..primitives.len() {
             let c0 = glm::Vec4::new(1.0, 0.0, 0.0, 0.0);
             let c1 = glm::Vec4::new(0.0, 1.0, 0.0, 0.0);
             let c2 = glm::Vec4::new(0.0, 0.0, 1.0, 0.0);
@@ -290,8 +292,8 @@ impl<'a> State<'a> {
             let m2 = glm::Matrix4::new(c0, c1, c2, c3);
 
             let matrix = 
-                ext::rotate(&m1, quads[i].angle, glm::Vec3::new(0.0, 0.0, 1.0))
-                * ext::translate(&m2, quads[i].position);
+                ext::rotate(&m1, primitives[i].angle, glm::Vec3::new(0.0, 0.0, 1.0))
+                * ext::translate(&m2, primitives[i].position);
             
             self.ubo_group.as_mut().unwrap().upload(offset + i as u64, &matrix, &self.queue);
         }
@@ -299,25 +301,9 @@ impl<'a> State<'a> {
         // in this case tris and quads, so when it goes to tri operations,
         // you must add the amount of quads that were in the buffer to the index 
         // so that it gets to the tris properly
-        offset += quads.len() as u64;
-        // loop through tris and apply ubo with matrix
-        for i in 0..tris.len() {
-            // construct identity matrix
-            let c0 = glm::Vec4::new(1.0, 0.0, 0.0, 0.0);
-            let c1 = glm::Vec4::new(0.0, 1.0, 0.0, 0.0);
-            let c2 = glm::Vec4::new(0.0, 0.0, 1.0, 0.0);
-            let c3 = glm::Vec4::new(0.0, 0.0, 0.0, 1.0);
-            let m1 = glm::Matrix4::new(c0, c1, c2, c3);
-            let m2 = glm::Matrix4::new(c0, c1, c2, c3);
-
-            let matrix = 
-                ext::rotate(&m1, tris[i].angle,glm::Vec3::new(0.0, 0.0, 1.0))
-               * ext::translate(&m2, tris[i].position);
+        offset += primitives.len() as u64;
             
-           self.ubo_group.as_mut().unwrap().upload(offset + i as u64, &matrix, &self.queue);
-        }
 
-        offset += tris.len() as u64;
         let mut x = 0;
         for model in models {
             let c0 = glm::Vec4::new(1.0, 0.0, 0.0, 0.0);
@@ -338,18 +324,17 @@ impl<'a> State<'a> {
         
     }
 
-    fn render_model(&self, model: &Model, renderpass: &mut wgpu::RenderPass) {
+    fn render_model(&self, model: &Model, renderpass: &mut wgpu::RenderPass, offset: usize) {
         // bind vertex and index buffer
         renderpass.set_vertex_buffer(0, 
             model.buffer.slice(0..model.ebo_offset));
         renderpass.set_index_buffer(model.buffer.slice(model.ebo_offset..), 
             wgpu::IndexFormat::Uint32);
 
-
         // transforms
         renderpass.set_bind_group(
             1, 
-            &(self.ubo_group.as_ref().unwrap()).bind_groups[self.models.len() - 1], 
+            &(self.ubo_group.as_ref().unwrap()).bind_groups[offset + self.models.len() - 1], 
             &[]);
         // renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
         
@@ -362,11 +347,13 @@ impl<'a> State<'a> {
                 
             let start = submesh.first_index as u32;
             renderpass.draw_indexed(start..(start + submesh.index_count), 0, 0..1);
+
+            // info!("Are we here? {:#?}", &model.name);
         }
     }
-    pub fn render(&mut self, quads: &Vec<Object>, tris: &Vec<Object>, models: &Vec<Object>, camera: &Camera) {
+    pub fn render(&mut self, primitives: &Vec<Object>, models: &Vec<Object>, camera: &Camera) {
         self.update_projection(camera);
-        self.update_transforms(quads, tris, models);
+        self.update_transforms(primitives, models);
 
 
         // wait for the queue to submit the tris and quads before going ahead
@@ -429,7 +416,30 @@ impl<'a> State<'a> {
             let mut renderpass = command_encoder.begin_render_pass(&render_pass_descriptor);
             renderpass.set_pipeline(&self.render_pipelines[&PipelineType::Simple]);
             renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
-            self.render_model(&self.models[0], &mut renderpass);
+
+            // let cube = primitives::make_cube(&self.device);
+            // let texture = new_texture("resources/bald.png", &self.device, &self.queue, &self.bind_group_layouts[&BindScope::Texture]);
+            //
+            // renderpass.set_bind_group(0, &texture, &[]);
+            // renderpass.set_vertex_buffer(0, 
+            //     cube.buffer.slice(0..cube.offset));
+            // renderpass.set_index_buffer(cube.buffer.slice(cube.offset..), 
+            //     wgpu::IndexFormat::Uint16);
+
+            let mut offset: usize = 0;
+            // for i in 0..primitives.len() {
+            //     renderpass.set_bind_group(
+            //         1, 
+            //         &(self.ubo_group.as_ref().unwrap()).bind_groups[offset + i], 
+            //         &[]);
+            //     renderpass.draw_indexed(0..36, 0, 0..1);
+            // }
+            // offset += primitives.len();
+
+            renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
+            self.render_model(&self.models[0], &mut renderpass, offset);
+            self.render_model(&self.models[1], &mut renderpass, offset);
+            info!("Map: {:#?} Cube: {:#?}", &self.models[0], &self.models[1])
         }
         //
         let raw_input = egui::RawInput {
@@ -442,50 +452,50 @@ impl<'a> State<'a> {
             ..Default::default() 
         };
 
-        let mut full_output = ui::debug::debug(&raw_input, &self.egui_ctx, &self.egui_events);
-        let paint_jobs = self.egui_ctx.tessellate(full_output.shapes, self.egui_ctx.pixels_per_point());
-
-        let screen_descriptor = egui_wgpu::ScreenDescriptor {
-            size_in_pixels: [self.size.0 as u32, self.size.1 as u32],
-            pixels_per_point: self.egui_ctx.pixels_per_point(),
-        };
-
-        for (id, image_delta) in &full_output.textures_delta.set {
-                for delta in image_delta {
-                    self.egui_renderer.update_texture(&self.device, &self.queue, *id, delta);
-                }
-        }
-
-        self.egui_renderer.update_buffers(&self.device, &self.queue, &mut command_encoder, &paint_jobs, &screen_descriptor);
-
-        {
-            let egui_color_attachment = wgpu::RenderPassColorAttachment{
-                view: &image_view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Load,
-                    store: wgpu::StoreOp::Store,
-                },
-                depth_slice: None,
-            };
-            let egui_pass_descriptor = wgpu::RenderPassDescriptor{
-                label: Some("egui pass"),
-                color_attachments: &[Some(egui_color_attachment)],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-                ..Default::default()
-            };
-            let mut pass = command_encoder.begin_render_pass(&egui_pass_descriptor)
-                .forget_lifetime();
-            self.egui_renderer.render(&mut pass, &paint_jobs, &screen_descriptor);
-        }
-
-        for id in &full_output.textures_delta.free {
-            self.egui_renderer.free_texture(id);
-        }
-
-        full_output.textures_delta.clear();
+        // let mut full_output = ui::debug::debug(&raw_input, &self.egui_ctx);
+        // let paint_jobs = self.egui_ctx.tessellate(full_output.shapes, self.egui_ctx.pixels_per_point());
+        //
+        // let screen_descriptor = egui_wgpu::ScreenDescriptor {
+        //     size_in_pixels: [self.size.0 as u32, self.size.1 as u32],
+        //     pixels_per_point: self.egui_ctx.pixels_per_point(),
+        // };
+        //
+        // for (id, image_delta) in &full_output.textures_delta.set {
+        //         for delta in image_delta {
+        //             self.egui_renderer.update_texture(&self.device, &self.queue, *id, delta);
+        //         }
+        // }
+        //
+        // self.egui_renderer.update_buffers(&self.device, &self.queue, &mut command_encoder, &paint_jobs, &screen_descriptor);
+        //
+        // {
+        //     let egui_color_attachment = wgpu::RenderPassColorAttachment{
+        //         view: &image_view,
+        //         resolve_target: None,
+        //         ops: wgpu::Operations {
+        //             load: wgpu::LoadOp::Load,
+        //             store: wgpu::StoreOp::Store,
+        //         },
+        //         depth_slice: None,
+        //     };
+        //     let egui_pass_descriptor = wgpu::RenderPassDescriptor{
+        //         label: Some("egui pass"),
+        //         color_attachments: &[Some(egui_color_attachment)],
+        //         depth_stencil_attachment: None,
+        //         occlusion_query_set: None,
+        //         timestamp_writes: None,
+        //         ..Default::default()
+        //     };
+        //     let mut pass = command_encoder.begin_render_pass(&egui_pass_descriptor)
+        //         .forget_lifetime();
+        //     self.egui_renderer.render(&mut pass, &paint_jobs, &screen_descriptor);
+        // }
+        //
+        // for id in &full_output.textures_delta.free {
+        //     self.egui_renderer.free_texture(id);
+        // }
+        //
+        // full_output.textures_delta.clear();
 
         self.queue.submit(Some(command_encoder.finish()));
         self.queue.present(drawable);
@@ -562,6 +572,9 @@ impl<'a> State<'a> {
 
         let mut loader = ObjLoader::new();
         self.models.push(loader.load(&mut self.materials, "Quads.obj", &self.device, &pre_transform));
+
+        self.models.push(primitives::make_cube(&self.device, &mut self.materials));
+        // self.materials.push(Material {pipeline_type: PipelineType::TexturedModel, color: None, filename: Some("resources/bald.png".to_string()), texture: None});
 
         for material in &mut self.materials {
             material.texture = match material.pipeline_type {
