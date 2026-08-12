@@ -1,5 +1,3 @@
-use std::fs;
-
 use glfw::{Context, Action, Key, fail_on_errors};
 
 mod renderer;
@@ -8,7 +6,11 @@ use renderer::world::*;
 
 mod model;
 use model::game_object::Object;
+
 mod utility;
+use crate::utility::logging;
+
+mod engine;
 
 
 
@@ -25,10 +27,11 @@ async fn run() {
     window.set_key_polling(true);
     window.set_size_polling(true);
     window.set_pos_polling(true);
+    window.set_cursor_pos_polling(true);
     window.set_mouse_button_polling(true);
     window.make_current();
 
-    window.set_cursor_mode(glfw::CursorMode::Disabled);
+    // window.set_cursor_mode(glfw::CursorMode::Disabled);
 
     if window.glfw.supports_raw_motion() {
         window.set_raw_mouse_motion(true);
@@ -49,7 +52,9 @@ async fn run() {
         // call poll events to stop the buffer of event objects from stacking
         world.update(16.67, state.window);
         glfw.poll_events();
+
         for(_, event) in glfw::flush_messages(&events) {
+            state.handle_glfw_event(&event);
             match event {
                 // key checking
                 glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
@@ -101,24 +106,11 @@ async fn run() {
             }
         }
         state.render(&world.quads, &world.tris, &world.models, &world.camera);
+         
     }
 }
 fn main() {
-    let timestamp = chrono::Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-    let log_filename = format!("logs/app_{}.log", timestamp);
-
-    fs::create_dir_all("logs").expect("could not create logs dir");
-
-    let raw = fs::read_to_string("logs/config/log4rs.yaml")
-        .expect("could not read log4rs config file");
-    let substituted = raw.replace("${DYNAMIC_LOG_PATH:-logs/app.log}", &log_filename);
-
-    let generated_config_path = "logs/config/log4rs.generated.yaml";
-    fs::write(generated_config_path, substituted)
-        .expect("could not write generated log4rs config");
-
-    log4rs::init_file(generated_config_path, Default::default())
-        .expect("Failed to initialize log4rs configuration file");
-
+    logging::initialize();
     pollster::block_on(run());
+
 }

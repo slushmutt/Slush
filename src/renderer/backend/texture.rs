@@ -1,5 +1,4 @@
 use std::{env::current_dir, fs};
-
 use glm::Vec4;
 use image::GenericImageView;
 use wgpu::util::DeviceExt;

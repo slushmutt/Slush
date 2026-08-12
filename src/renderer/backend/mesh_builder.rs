@@ -276,7 +276,8 @@ impl ObjLoader {
         let x: f32 = words[1].parse().unwrap();
         let y: f32 = words[2].parse().unwrap();
         let z: f32 = words[3].parse().unwrap();
-        let transformed = *pre_transform * Vec4::new(x, y, z, 1.0);
+        // swapping z and y here because most things i use export with y as up
+        let transformed = *pre_transform * Vec4::new(x, z, y, 1.0);
         let pos = Vec3::new(transformed.x, transformed.y, transformed.z);
         self.v.push(pos);
     }

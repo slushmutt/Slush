@@ -8,7 +8,7 @@ appenders:
 
   file_logger:
     kind: file
-    path: "logs/app_2026-08-12_01-00-36.log"
+    path: "logs/app_2026-08-12_01-57-42.log"
     encoder:
       pattern: "{h({d(%Y-%m-%d %H:%M:%S%.3f)} [{l}] {M}:{L} -> {m}{n})}"
 root:

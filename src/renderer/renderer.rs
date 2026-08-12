@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use glfw::Key::P;
 use glm::dot;
 use glm::radians;
@@ -50,6 +49,11 @@ pub struct State<'a> {
     materials: Vec<Material>,
     pub models: Vec<Model>,
     depth_buffer: Texture,
+        
+    egui_ctx: egui::Context,
+    egui_renderer: egui_wgpu::Renderer,
+    egui_events: Vec<egui::Event>,
+    egui_pointer_pos: egui::Pos2,
 }
 impl<'a> State<'a> {
     // constructor
@@ -111,6 +115,14 @@ impl<'a> State<'a> {
         let projection_ubo = UBO::new(&device, &bind_group_layouts[&BindScope::UBO]);
 
         let depth_buffer = new_depth_texture(&device, &config, "Depth Buffer");
+
+        let egui_ctx = egui::Context::default();
+        let mut egui_renderer = egui_wgpu::Renderer::new(
+            &device,
+            surface_format,               // your existing surface format
+            egui_wgpu::RendererOptions::default(),
+        );
+
         Self{
             instance,
             window,
@@ -126,6 +138,39 @@ impl<'a> State<'a> {
             materials: Vec::new(),
             models: Vec::new(),
             depth_buffer,
+            egui_ctx,
+            egui_renderer,
+            egui_events: Vec::new(),
+            egui_pointer_pos: egui::pos2(0.0, 0.0),
+        }
+    }
+    pub fn handle_glfw_event(&mut self, event: &glfw::WindowEvent) {
+        match event {
+            glfw::WindowEvent::CursorPos(x, y) => {
+                self.egui_pointer_pos = egui::pos2(*x as f32, *y as f32);
+                self.egui_events.push(egui::Event::PointerMoved(self.egui_pointer_pos));
+            }
+            glfw::WindowEvent::MouseButton(button, action, _) => {
+                self.egui_events.push(egui::Event::PointerButton {
+                    pos: self.egui_pointer_pos,
+                    button: match button {
+                        glfw::MouseButton::Button1 => egui::PointerButton::Primary,
+                        glfw::MouseButton::Button2 => egui::PointerButton::Secondary,
+                        _ => egui::PointerButton::Middle,
+                    },
+                    pressed: *action == glfw::Action::Press,
+                    modifiers: egui::Modifiers::default(),
+                });
+            }
+            glfw::WindowEvent::Scroll(x, y) => {
+                self.egui_events.push(egui::Event::MouseWheel {
+                    unit: egui::MouseWheelUnit::Line,
+                    delta: egui::vec2(*x as f32, *y as f32),
+                    modifiers: egui::Modifiers::default(),
+                    phase: egui::TouchPhase::Start
+                });
+            }
+            _ => {}
         }
     }
 
@@ -385,11 +430,73 @@ impl<'a> State<'a> {
             renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
             self.render_model(&self.models[0], &mut renderpass);
         }
-        self.queue.submit(std::iter::once(command_encoder.finish()));
+        //
+        let raw_input = egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_size(
+                egui::Pos2::ZERO,
+                egui::vec2(self.size.0 as f32, self.size.1 as f32),
+            )),
+            events: std::mem::take(&mut self.egui_events),
+            ..Default::default() 
+        };
 
-        // put it on the screen
+        let mut full_output = self.egui_ctx.run_ui(raw_input, |ctx| {
+            egui::Window::new("Debug").show(ctx, |ui| {
+                ui.label("Hello from egui");
+                if ui.button("Click me").clicked() {
+                    println!("clicked");
+                }
+            });
+        });
+
+        let paint_jobs = self.egui_ctx.tessellate(full_output.shapes, self.egui_ctx.pixels_per_point());
+
+        let screen_descriptor = egui_wgpu::ScreenDescriptor {
+            size_in_pixels: [self.size.0 as u32, self.size.1 as u32],
+            pixels_per_point: self.egui_ctx.pixels_per_point(),
+        };
+
+        for (id, image_delta) in &full_output.textures_delta.set {
+                for delta in image_delta {
+                    self.egui_renderer.update_texture(&self.device, &self.queue, *id, delta);
+                }
+        }
+
+        self.egui_renderer.update_buffers(&self.device, &self.queue, &mut command_encoder, &paint_jobs, &screen_descriptor);
+
+        {
+            let egui_color_attachment = wgpu::RenderPassColorAttachment{
+                view: &image_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Load,
+                    store: wgpu::StoreOp::Store,
+                },
+                depth_slice: None,
+            };
+            let egui_pass_descriptor = wgpu::RenderPassDescriptor{
+                label: Some("egui pass"),
+                color_attachments: &[Some(egui_color_attachment)],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+                ..Default::default()
+            };
+            let mut pass = command_encoder.begin_render_pass(&egui_pass_descriptor)
+                .forget_lifetime();
+            self.egui_renderer.render(&mut pass, &paint_jobs, &screen_descriptor);
+        }
+
+        for id in &full_output.textures_delta.free {
+            self.egui_renderer.free_texture(id);
+        }
+
+        full_output.textures_delta.clear();
+
+        self.queue.submit(Some(command_encoder.finish()));
         self.queue.present(drawable);
     }
+
     fn build_pipelines(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration, bind_group_layouts: &HashMap<BindScope, wgpu::BindGroupLayout>) -> HashMap<PipelineType, wgpu::RenderPipeline> { 
         let mut pipelines: HashMap<PipelineType, wgpu::RenderPipeline> = HashMap::new();
         let mut pipeline_type: PipelineType;
