@@ -319,50 +319,48 @@ impl ObjLoader {
     }
 
     fn read_vertex(&mut self, bundle: String) {
-        let face_line = bundle.as_str().trim();
-        if face_line.is_empty() || face_line.starts_with('#') {
-            return; 
-        }
+        if!self.history.contains_key(&bundle){
+            self.history.insert(bundle.clone(), self.vertex_data.len() as u32);
+            let face_line = bundle.as_str().trim();
+            if face_line.is_empty() || face_line.starts_with('#') {
+                return; 
+            }
 
-        let clean_bundle = if face_line.starts_with("f ") {
-            face_line.strip_prefix("f ").unwrap().trim()
-        } else {
-            face_line
-        };
+            let clean_bundle = if face_line.starts_with("f ") {
+                face_line.strip_prefix("f ").unwrap().trim()
+            } else {
+                face_line
+            };
 
-        let v_vt_vn: Vec<&str> = clean_bundle.split('/').collect();
+            let v_vt_vn: Vec<&str> = clean_bundle.split('/').collect();
 
-        let raw_i: isize = v_vt_vn.get(0)
-            .and_then(|s| s.parse::<isize>().ok())
-            .expect("Missing or invalid vertex position index");
+            let raw_i: isize = v_vt_vn.get(0)
+                .and_then(|s| s.parse::<isize>().ok())
+                .expect("Missing or invalid vertex position index");
 
-        let i: usize = if raw_i < 0 {
-            (self.v.len() as isize + raw_i) as usize
-        } else {
-            (raw_i - 1) as usize
-        };
+            let i: usize = if raw_i < 0 {
+                (self.v.len() as isize + raw_i) as usize
+            } else {
+                (raw_i - 1) as usize
+            };
 
-        let j: usize = v_vt_vn.get(1)
-            .and_then(|s| s.parse::<isize>().ok())
-            .map(|idx| if idx < 0 { (self.vt.len() as isize + idx) as usize } else { (idx - 1) as usize })
-            .unwrap_or(0);
+            let j: usize = v_vt_vn.get(1)
+                .and_then(|s| s.parse::<isize>().ok())
+                .map(|idx| if idx < 0 { (self.vt.len() as isize + idx) as usize } else { (idx - 1) as usize })
+                .unwrap_or(0);
 
-        let k: usize = v_vt_vn.get(2)
-            .and_then(|s| s.parse::<isize>().ok())
-            .map(|idx| if idx < 0 { (self.vn.len() as isize + idx) as usize } else { (idx - 1) as usize })
-            .unwrap_or(0);
+            let k: usize = v_vt_vn.get(2)
+                .and_then(|s| s.parse::<isize>().ok())
+                .map(|idx| if idx < 0 { (self.vn.len() as isize + idx) as usize } else { (idx - 1) as usize })
+                .unwrap_or(0);
 
-        let vertex = ModelVertex {
-        position: self.v[i], 
-        tex_coord: if v_vt_vn.get(1).filter(|s| !s.is_empty()).is_some() { self.vt[j] } else { Vec2::new(0.0, 0.0) }, 
-        normal: if v_vt_vn.get(2).filter(|s| !s.is_empty()).is_some() { self.vn[k] } else { Vec3::new(0.0, 0.0, 0.0) },};
-
-        if self.vertex_data.contains(&vertex) {
-            self.index_data.push(self.vertex_data.len() as u32);
-        } else {
-            self.index_data.push(self.vertex_data.len() as u32);
+            let vertex = ModelVertex {
+            position: self.v[i], 
+            tex_coord: if v_vt_vn.get(1).filter(|s| !s.is_empty()).is_some() { self.vt[j] } else { Vec2::new(0.0, 0.0) }, 
+            normal: if v_vt_vn.get(2).filter(|s| !s.is_empty()).is_some() { self.vn[k] } else { Vec3::new(0.0, 0.0, 0.0) },};
             self.vertex_data.push(vertex);
-        } 
+        }
+        self.index_data.push(self.history[&bundle]);
 
         self.current_submesh.index_count += 1;
     }
