@@ -12,7 +12,7 @@
     * [ ] Capsules
 * [ ] Implement [lighting system](#lighting-details)
 * [ ] Trenchbroom [.map file](#trenchbroom-map-details) parsing and rendering
-* [ ] UI Rendering
+* [x] UI Rendering `(08/12/26)`
 * [ ] [Stylized Shaders](#shader-details)
     * [ ] Vertex Warping
 * [ ] Seperate my models bind groups from whatever the last loaded mesh was so that it can have its own position.
@@ -22,7 +22,7 @@
 * [ ] [Physics System](#physics-details)
 * [ ] Trenchbroom [.map file](#trenchbroom-map-details) Implementation
 * [ ] Logging System
-* [ ] UI System
+* [x] UI System `(08/12/26)`
 * [ ] [Multiplayer](#multiplayer-details)
 
 # Notes & Resources

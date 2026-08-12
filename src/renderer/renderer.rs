@@ -442,7 +442,7 @@ impl<'a> State<'a> {
             ..Default::default() 
         };
 
-        let mut full_output = ui::debug::debug(&raw_input, &self.egui_ctx);
+        let mut full_output = ui::debug::debug(&raw_input, &self.egui_ctx, &self.egui_events);
         let paint_jobs = self.egui_ctx.tessellate(full_output.shapes, self.egui_ctx.pixels_per_point());
 
         let screen_descriptor = egui_wgpu::ScreenDescriptor {
