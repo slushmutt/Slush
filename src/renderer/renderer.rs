@@ -9,6 +9,7 @@ use raw_window_handle::HasDisplayHandle;
 use glfw::Window;
 use glm::ext;
 
+use crate::engine::ui;
 use crate::renderer::backend::mesh_builder::ObjLoader;
 use crate::renderer::backend::pipeline::Builder;
 use crate::renderer::backend::texture::*;
@@ -437,18 +438,11 @@ impl<'a> State<'a> {
                 egui::vec2(self.size.0 as f32, self.size.1 as f32),
             )),
             events: std::mem::take(&mut self.egui_events),
+            focused: true,
             ..Default::default() 
         };
 
-        let mut full_output = self.egui_ctx.run_ui(raw_input, |ctx| {
-            egui::Window::new("Debug").show(ctx, |ui| {
-                ui.label("Hello from egui");
-                if ui.button("Click me").clicked() {
-                    println!("clicked");
-                }
-            });
-        });
-
+        let mut full_output = ui::debug::debug(&raw_input, &self.egui_ctx);
         let paint_jobs = self.egui_ctx.tessellate(full_output.shapes, self.egui_ctx.pixels_per_point());
 
         let screen_descriptor = egui_wgpu::ScreenDescriptor {

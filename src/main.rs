@@ -33,9 +33,9 @@ async fn run() {
 
     // window.set_cursor_mode(glfw::CursorMode::Disabled);
 
-    if window.glfw.supports_raw_motion() {
-        window.set_raw_mouse_motion(true);
-    }
+    // if window.glfw.supports_raw_motion() {
+    //     window.set_raw_mouse_motion(true);
+    // }
 
     let mut state = State::new(&mut window).await;
     let mut world = World::new();
@@ -98,7 +98,9 @@ async fn run() {
                     state.update_surface();
                     state.resize(state.size);
                 }
-
+                glfw::WindowEvent::MouseButton(button, action, _) => {
+                    println!("mouse button event: {button:?} {action:?}");
+                }
                 // default handling
                 _ => {
                     // println!("{:?}", event);
