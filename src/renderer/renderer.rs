@@ -42,14 +42,6 @@ pub struct State<'a> {
 
     render_pipelines: HashMap<PipelineType,wgpu::RenderPipeline>,
     
-    triangle_mesh: wgpu::Buffer,
-
-    quad_mesh: Mesh,
-
-    triangle_material: wgpu::BindGroup,
-
-    quad_material: wgpu::BindGroup,
-
     ubo_group: Option<UBOGroup>,
 
     projection_ubo: UBO,
@@ -112,14 +104,9 @@ impl<'a> State<'a> {
         };
         surface.configure(&device, &config);
 
-        let triangle_mesh = mesh_builder::make_triangle(&device);
-        let quad_mesh = mesh_builder::make_quad(&device);
-
         let bind_group_layouts = State::build_bind_group_layouts(&device);
 
         let render_pipelines = State::build_pipelines(&device,&config,&bind_group_layouts);
-        let quad_material = new_texture("resources/bald.png", &device, &queue, &bind_group_layouts[&BindScope::Texture]);
-        let triangle_material = new_texture("resources/background.jpg", &device, &queue, &bind_group_layouts[&BindScope::Texture]);
 
         let projection_ubo = UBO::new(&device, &bind_group_layouts[&BindScope::UBO]);
 
@@ -133,10 +120,6 @@ impl<'a> State<'a> {
             config,
             size,
             render_pipelines,
-            triangle_mesh,
-            quad_mesh,
-            triangle_material,
-            quad_material,
             ubo_group: None,
             projection_ubo: projection_ubo,
             bind_group_layouts,
@@ -309,7 +292,7 @@ impl<'a> State<'a> {
         
     }
 
-    fn render_model(&self, model: &Model, renderpass: &mut wgpu::RenderPass, offset: usize) {
+    fn render_model(&self, model: &Model, renderpass: &mut wgpu::RenderPass) {
         // bind vertex and index buffer
         renderpass.set_vertex_buffer(0, 
             model.buffer.slice(0..model.ebo_offset));
@@ -320,7 +303,7 @@ impl<'a> State<'a> {
         // transforms
         renderpass.set_bind_group(
             1, 
-            &(self.ubo_group.as_ref().unwrap()).bind_groups[offset], 
+            &(self.ubo_group.as_ref().unwrap()).bind_groups[self.models.len() - 1], 
             &[]);
         // renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
         
@@ -399,34 +382,8 @@ impl<'a> State<'a> {
         {
             let mut renderpass = command_encoder.begin_render_pass(&render_pass_descriptor);
             renderpass.set_pipeline(&self.render_pipelines[&PipelineType::Simple]);
-           
-            // quads
-            renderpass.set_bind_group(0, &self.quad_material, &[]);
             renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
-            // use new single buffer for both index and vertex buffer
-            renderpass.set_vertex_buffer(0, self.quad_mesh.buffer.slice(0..self.quad_mesh.offset));
-            renderpass.set_index_buffer(self.quad_mesh.buffer.slice(self.quad_mesh.offset..), wgpu::IndexFormat::Uint16);
-
-            // bind the bind groups for the quads
-            // draw all of the quads
-            let mut offset: usize = 0;
-            for i in 0..quads.len() {
-                renderpass.set_bind_group(1, &self.ubo_group.as_ref().unwrap().bind_groups[offset + i], &[]);
-                renderpass.draw_indexed(0..6, 0, 0..1);
-            }
-
-            // tris
-            renderpass.set_bind_group(0, &self.triangle_material, &[]);
-            renderpass.set_vertex_buffer(0, self.triangle_mesh.slice(..));
-            // bind the bind groups for the tris
-            // draw all of the tris
-            offset += quads.len();
-            for i in 0..tris.len() {
-                renderpass.set_bind_group(1, &self.ubo_group.as_ref().unwrap().bind_groups[offset + i], &[]);
-                renderpass.draw_indexed(0..6, 0, 0..1);
-                renderpass.draw(0..3, 0..1);
-            }
-            self.render_model(&self.models[0], &mut renderpass, offset);
+            self.render_model(&self.models[0], &mut renderpass);
         }
         self.queue.submit(std::iter::once(command_encoder.finish()));
 
@@ -503,7 +460,7 @@ impl<'a> State<'a> {
         let pre_transform = glm::Matrix4::new(c0,c1,c2,c3);
 
         let mut loader = ObjLoader::new();
-        self.models.push(loader.load(&mut self.materials, "Testing.obj", &self.device, &pre_transform));
+        self.models.push(loader.load(&mut self.materials, "Quads.obj", &self.device, &pre_transform));
 
         for material in &mut self.materials {
             material.texture = match material.pipeline_type {

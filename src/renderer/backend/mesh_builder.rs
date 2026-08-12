@@ -119,22 +119,22 @@ impl ObjLoader {
     }
     fn parse_materials(&mut self, filename: &str, materials: &mut Vec<Material>) {
         let mut full_filepath = current_dir().unwrap();
-        full_filepath.push("models/");
+        full_filepath.push("resources/models/");
         full_filepath.push(filename);
         let mut filepath_str = full_filepath.into_os_string().into_string().unwrap();
 
-        let full_contents = fs::read_to_string(filepath_str)
-            .expect("Can't read model file!");
+        let full_contents = fs::read_to_string(&filepath_str)
+            .unwrap_or_else(|_| panic!("Failed to load model: {}", &filepath_str));
         let mut token: &str = "\n";
 
         let lines = split(&full_contents, token);
         token = " ";
 
+
         
         let mut mtl_filename: String = "default.mtl".to_string();
         for line in lines {
             let words = split(&line, token);
-
             if words[0] == "mtllib" {
                 mtl_filename = words[1].clone();
                 break;
@@ -142,12 +142,12 @@ impl ObjLoader {
         }
 
         full_filepath = current_dir().unwrap();
-        full_filepath.push("models/");
+        full_filepath.push("resources/models/");
         full_filepath.push(mtl_filename);
         filepath_str = full_filepath.into_os_string().into_string().unwrap();
 
-        let full_contents = fs::read_to_string(filepath_str)
-            .expect("Can't read material file!");
+        let full_contents = fs::read_to_string(&filepath_str)
+            .unwrap_or_else(|_| panic!("Failed to load model: {}", &filepath_str));
         token = "\n";
 
         let lines = split(&full_contents, token);
@@ -213,24 +213,29 @@ impl ObjLoader {
     }
 
     fn load_obj(&mut self, device: &wgpu::Device, filename: &str, pre_transform: &Mat4) -> Model{
-
         let mut submeshes: Vec<SubMesh> = Vec::new();
         self.recording = false;
 
         let mut full_filepath = current_dir().unwrap();
-        full_filepath.push("models/");
+        full_filepath.push("resources/models/");
         full_filepath.push(filename);
         let filepath_str = full_filepath.into_os_string().into_string().unwrap();
 
-        let full_contents = fs::read_to_string(filepath_str)
-            .expect("Can't read model file!");
+
+        let full_contents = fs::read_to_string(&filepath_str)
+            .unwrap_or_else(|_| panic!("Failed to load model: {}", &filepath_str));
         let mut token: &str = "\n";
 
         let lines = split(&full_contents, token);
         token = " ";
 
         for line in lines {
-            let words = split(&line, token);
+            let mut words = split(&line, token);
+            words.retain(|value| *value != "");
+            if words.len() == 0 {
+                continue;
+            }
+
 
             match words[0].as_str() {
                 "v" => {
@@ -308,9 +313,7 @@ impl ObjLoader {
     }
 
     fn read_f(&mut self, words: &Vec<String>) {
-        
         let triangle_count = words.len() - 3;
-
         for i in 0 .. triangle_count {
             self.read_vertex(words[1].clone());
             self.read_vertex(words[i + 2].clone());

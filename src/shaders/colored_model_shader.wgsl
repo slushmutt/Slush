@@ -22,6 +22,6 @@ fn vs_main(vertex: Vertex) -> VertexPayload {
 @fragment
 fn fs_main(in: VertexPayload) -> @location(0) vec4<f32> {
     var sun_direction: vec3<f32> = normalize(vec3<f32>(1.0,1.0,-1.0));
-    var light_strength: f32 = max(0.0, dot(in.normal, sun_direction));
+    var light_strength: f32 = max(0.2, dot(in.normal, sun_direction));
     return vec4<f32>(light_strength * color.rgb, 1.0);
 }
