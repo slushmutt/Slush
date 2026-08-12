@@ -1,6 +1,7 @@
 use std::{collections::HashMap, env::current_dir, fs, thread::current};
 
 use glm::*;
+use log::info;
 use wgpu::util::DeviceExt;
 use super::definitions::*;
 use crate::utility::string::{self, split};
@@ -351,13 +352,17 @@ impl ObjLoader {
             .map(|idx| if idx < 0 { (self.vn.len() as isize + idx) as usize } else { (idx - 1) as usize })
             .unwrap_or(0);
 
-        self.index_data.push(self.vertex_data.len() as u32);
+        let vertex = ModelVertex {
+        position: self.v[i], 
+        tex_coord: if v_vt_vn.get(1).filter(|s| !s.is_empty()).is_some() { self.vt[j] } else { Vec2::new(0.0, 0.0) }, 
+        normal: if v_vt_vn.get(2).filter(|s| !s.is_empty()).is_some() { self.vn[k] } else { Vec3::new(0.0, 0.0, 0.0) },};
 
-        self.vertex_data.push(ModelVertex {
-            position: self.v[i], 
-            tex_coord: if v_vt_vn.get(1).filter(|s| !s.is_empty()).is_some() { self.vt[j] } else { Vec2::new(0.0, 0.0) }, 
-            normal: if v_vt_vn.get(2).filter(|s| !s.is_empty()).is_some() { self.vn[k] } else { Vec3::new(0.0, 0.0, 0.0) },
-        });
+        if self.vertex_data.contains(&vertex) {
+            self.index_data.push(self.vertex_data.len() as u32);
+        } else {
+            self.index_data.push(self.vertex_data.len() as u32);
+            self.vertex_data.push(vertex);
+        } 
 
         self.current_submesh.index_count += 1;
     }

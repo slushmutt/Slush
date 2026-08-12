@@ -68,6 +68,7 @@ impl Vertex {
 }
 
 #[repr(C)]
+#[derive(PartialEq)]
 pub struct ModelVertex {
     pub position: Vec3,
     pub tex_coord: Vec2,
