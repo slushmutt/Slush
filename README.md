@@ -44,8 +44,8 @@
 ## Engine Details
 
 ### Collision Details
-* **Last Changed:** 2026-08-11
-* **Implementation:** Need to decide a method for collision. More than likely will choose something that works well with BSP Trees as that will be the way I do physics.
+* **Last Changed:** 2026-08-12
+* **Implementation:**  Basic AABB Collision is now implemented. There is still alot of work to do with collisions still though.
 ### Physics Details
 * **Last Changed:** 2026-08-11
 * **Implementation:** Going to do a system similar to Quake, more than likely going to be BSP Trees.
