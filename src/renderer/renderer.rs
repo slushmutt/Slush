@@ -32,7 +32,7 @@ pub struct State<'a> {
     // a surface is what we present our rendering too, in this case it is targetting the glfw window
     surface: wgpu::Surface<'a>,
     // a device is an abstracted version of the gpu being used to render
-    device: wgpu::Device,
+    pub device: wgpu::Device,
     // a queue is where work is submitted
     queue: wgpu::Queue,
     // settings for the surface
@@ -49,7 +49,7 @@ pub struct State<'a> {
     projection_ubo: UBO,
 
     bind_group_layouts: HashMap<BindScope, wgpu::BindGroupLayout>,
-    materials: Vec<Material>,
+    pub materials: Vec<Material>,
     pub models: Vec<Model>,
     depth_buffer: Texture,
         
@@ -87,7 +87,10 @@ impl<'a> State<'a> {
 
         let device_descriptor = wgpu::DeviceDescriptor {
             required_features: wgpu::Features::empty(),
-            required_limits: wgpu::Limits::default(),
+            required_limits: wgpu::Limits{
+                max_uniform_buffer_binding_size: 1024 * 1024,
+                ..Default::default()
+            },
             label: Some("Device"),
             ..Default::default()
         };
@@ -334,7 +337,7 @@ impl<'a> State<'a> {
         // transforms
         renderpass.set_bind_group(
             1, 
-            &(self.ubo_group.as_ref().unwrap()).bind_groups[offset + self.models.len() - 1], 
+            &(self.ubo_group.as_ref().unwrap()).bind_groups[offset], 
             &[]);
         // renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
         
@@ -426,7 +429,6 @@ impl<'a> State<'a> {
             // renderpass.set_index_buffer(cube.buffer.slice(cube.offset..), 
             //     wgpu::IndexFormat::Uint16);
 
-            let mut offset: usize = 0;
             // for i in 0..primitives.len() {
             //     renderpass.set_bind_group(
             //         1, 
@@ -436,10 +438,12 @@ impl<'a> State<'a> {
             // }
             // offset += primitives.len();
 
-            renderpass.set_bind_group(2, &self.projection_ubo.bind_group, &[]);
-            self.render_model(&self.models[0], &mut renderpass, offset);
-            self.render_model(&self.models[1], &mut renderpass, offset);
-            info!("Map: {:#?} Cube: {:#?}", &self.models[0], &self.models[1])
+            
+            let mut offset: usize = 0;
+            for model in &self.models {
+                self.render_model(&model, &mut renderpass, offset);
+                offset += 1;
+            }
         }
         //
         let raw_input = egui::RawInput {
@@ -563,18 +567,17 @@ impl<'a> State<'a> {
     }
 
     pub fn load_assets(&mut self) {
-        let scale = 0.1;
-        let c0 = glm::Vec4::new(scale, 0.0, 0.0, 0.0);
-        let c1 = glm::Vec4::new(0.0, scale, 0.0, 0.0);
-        let c2 = glm::Vec4::new(0.0, 0.0, scale, 0.0);
-        let c3 = glm::Vec4::new(0.0, 0.0, 0.0, 1.0);
-        let pre_transform = glm::Matrix4::new(c0,c1,c2,c3);
+        // let scale = 0.1;
+        // let c0 = glm::Vec4::new(scale, 0.0, 0.0, 0.0);
+        // let c1 = glm::Vec4::new(0.0, scale, 0.0, 0.0);
+        // let c2 = glm::Vec4::new(0.0, 0.0, scale, 0.0);
+        // let c3 = glm::Vec4::new(0.0, 0.0, 0.0, 1.0);
+        // let pre_transform = glm::Matrix4::new(c0,c1,c2,c3);
+        //
+        // let mut loader = ObjLoader::new();
+        // self.models.push(loader.load(&mut self.materials, "Quads.obj", &self.device, &pre_transform));
 
-        let mut loader = ObjLoader::new();
-        self.models.push(loader.load(&mut self.materials, "Quads.obj", &self.device, &pre_transform));
-
-        self.models.push(primitives::make_cube(&self.device, &mut self.materials));
-        // self.materials.push(Material {pipeline_type: PipelineType::TexturedModel, color: None, filename: Some("resources/bald.png".to_string()), texture: None});
+        // self.models.push(primitives::make_cube(&self.device, &mut self.materials));
 
         for material in &mut self.materials {
             material.texture = match material.pipeline_type {

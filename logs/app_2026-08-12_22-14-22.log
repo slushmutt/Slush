@@ -1,0 +1,2 @@
+2026-08-12 22:14:22.788 [INFO] wgpu_hal::vulkan::adapter:3546 -> Found 2 cooperative matrix configurations supported by wgpu
+2026-08-12 22:14:22.801 [WARN] egui_wgpu::renderer:407 -> Detected a linear (sRGBA aware) framebuffer Bgra8UnormSrgb. egui prefers Rgba8Unorm or Bgra8Unorm

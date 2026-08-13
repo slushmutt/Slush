@@ -1,0 +1,72 @@
+* Brushes
+    - Brushes are a collection on planes!
+    - The geometry behind a brush is the volume of all of its planes
+    - These are the building blocks of a map
+  --- A face of the brush always has a plane aswell
+* Planes
+    - Planes are an infinitely long face defined by a normal and distance from the origin along that normal
+    - In 2D we can represent a plane as a line
+    - When we have 4 lines that all point outwards we then have an inner space
+    - That is the Brushes geometry
+    - There is no config of planes that can produce a self intersecting shape
+    
+* Map
+    - The first step when using a map file is to collect all the planes of a map
+    - We loop over all of the faces of all of the brushes and track their respecting plane
+    - Importantly though we cant have duplicates
+    - We need to have a function that detects identical or duplicate planes and merges them into one
+    - If we do not do that we will have problems with infinitely thin leaves of the BSP Tree
+    - To do this we can have a find plane function
+    - Code Example:
+            Plane FindPlane(Plane input)
+            {
+                Plane output = input;
+
+                // normalizing a plane will return the same value for a plane and its mirror image
+                NormalizePlane(ref output)
+
+                for(int i = 0; i < curPlanes.length; i++)
+                {
+                    if(PlanesNearlyEqual(output, curPlanes[i]))
+                    {
+                        return curPlanes[i];
+                    }
+                }
+
+                curPlanes.Add(output);
+
+                return output;
+            }
+    - We want to store the found plane as a list of splits
+    - Importantly we store the plane even if its a duplicate
+    - With this plane we track the brush and face that it came from
+    - Then you can sort the splitting planes, because some orders of cuts can produce better results than others
+    - They are sorted by the approximate size of the face they originate from
+    - Such that larger faces are added first
+    - Now that we have a complete set of splits we want to make to the BSP Tree
+    - Though we still have the duplicate planes
+
+* BSP Tree
+    - Each node of the BSP Tree has a splitting plane, and an array of brushes that are contained on the back side of the plane, the side opposite the normal
+  --- The tree is arranged in a way such that any point query can be solved by traversing down the nodes on the tree
+    - And at each node deciding to walk left or right by determining which side of the nodes splitting plane we are on recursively.
+  --- We then go until we find a "leaf node" which is a node that has no children
+* Constructing the BSP Tree
+  --- After we now have a set of planes along with the brushes and faces that they came from
+  --- Now we need to create the nodes 
+    - For each split that we want to make we will walk the current tree down following every path
+  --- If we hit a leaf node which we will on the first iteration then we will split that nodesplits
+    - A split is only performed on a node if the brush that the split came from is contained within the node itself
+  --- We set the leafs splitting plane to the current plane we are iterating over then we add 2 new leaf nodes
+    - And then we give out the brushes contained within the parent based on if they are on the front or backside of this splitting plane
+    - Brushes that cover both are added to both sides
+    - On the next iteration we have to actually walk down
+    - If the search for a node to cut lands on a non leaf node we add its two children to the search
+    - Importantly we need to now check for the duplicate planes
+  --- Find plane found duplicate planes where it could but we still intentionally stored them anyways
+    - We take advantage of this now, if the plane we are trying to split with is close enough to the current non leaf node we instead add the brush that the split came from
+    - And we will skip clipping for that node
+    - This way brushes go where they are supposed to and we avoid creating identical splits
+    - We repeat this loop until all of our splits are processed
+  --- When all of these splits are done each leaf node will represent either an empty or solid volume of space and to classify which is which we can iterate over every node and call it solid if contents > 0 and empty if not
+  --- We now created a bsp representation of our entire map!

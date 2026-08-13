@@ -1,7 +1,9 @@
 use glm::{Vec3, min, max, cross, normalize, radians, cos, sin};
 
+#[derive(Clone, Debug)]
 pub struct Object{
     pub position: Vec3,
+    pub scale: Vec3,
     pub angle: f32
 }
 

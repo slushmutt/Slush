@@ -1,0 +1,15 @@
+2026-08-12 21:29:20.415 [INFO] wgpu_hal::vulkan::adapter:3546 -> Found 2 cooperative matrix configurations supported by wgpu
+2026-08-12 21:29:20.428 [WARN] egui_wgpu::renderer:407 -> Detected a linear (sRGBA aware) framebuffer Bgra8UnormSrgb. egui prefers Rgba8Unorm or Bgra8Unorm
+2026-08-12 21:29:20.430 [INFO] slush:49 -> Object {
+    position: Vector3 {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    },
+    scale: Vector3 {
+        x: 1.0,
+        y: 1.0,
+        z: 1.0,
+    },
+    angle: 0.0,
+}

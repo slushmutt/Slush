@@ -4,11 +4,10 @@ use wgpu::util::DeviceExt;
 
 use crate::renderer::backend::{definitions::{Material, Mesh, Model, ModelVertex, SubMesh, Vertex}, mesh_builder::{ObjLoader, any_as_u8_slice}};
 
-pub fn make_cube(device: &wgpu::Device, materials: &mut Vec<Material>) -> Model {
-    let scale = 0.1;
-    let c0 = glm::Vec4::new(scale, 0.0, 0.0, 0.0);
-    let c1 = glm::Vec4::new(0.0, scale, 0.0, 0.0);
-    let c2 = glm::Vec4::new(0.0, 0.0, scale, 0.0);
+pub fn make_cube(device: &wgpu::Device, materials: &mut Vec<Material>, scale: glm::Vec3) -> Model {
+    let c0 = glm::Vec4::new(scale.x, 0.0, 0.0, 0.0);
+    let c1 = glm::Vec4::new(0.0, scale.y, 0.0, 0.0);
+    let c2 = glm::Vec4::new(0.0, 0.0, scale.z, 0.0);
     let c3 = glm::Vec4::new(0.0, 0.0, 0.0, 1.0);
     let pre_transform = glm::Matrix4::new(c0,c1,c2,c3);
 

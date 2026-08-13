@@ -45,7 +45,7 @@ pub struct SubMesh {
     pub index_count: u32,
     pub material_id: usize,
 }
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Model {
     pub buffer: wgpu::Buffer,
     pub ebo_offset: u64,
